@@ -1,48 +1,43 @@
-from time import sleep
-from threading import Thread
-
 from PySide2.QtWidgets import QMainWindow, QLabel, QMessageBox
 from PySide2.QtGui import QCloseEvent
 
-from battery_state_checker import get_parameter
+from battery_state_checker import StateChecker
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setGeometry(0, 0, 200, 100)
-        self.setFixedSize(200, 100)
+        self.setWindowTitle("Battery notifier")
+        self.setGeometry(0, 0, 240, 100)
+        self.setFixedSize(240, 100)
 
-        self.status_label = QLabel("Status: ", self)
-        self.status_label.resize(170, 32)
-        self.status_label.move(15, 10)
+        self.status_label = self._setup_label("Status: ", 15, 10, 170, 32)
+        self.capacity_label = self._setup_label("Capacity: ", 15, 50, 170, 32)
 
-        self.capacity_label = QLabel("Capacity: ", self)
-        self.capacity_label.resize(170, 32)
-        self.capacity_label.move(15, 50)
+        self.current_state: str = ""
+        self.current_capacity: int = 0
 
-        self.minimum_level = 90
-        self.run_notifier = True
-        thread = Thread(target=self._run_state_notifier)
-        thread.start()
+        self.minimum_capacity_level = 90
 
-    def _run_state_notifier(self) -> None:
-        while self.run_notifier:
-            self._update_labels()
-            sleep(30)
+        self.state_checker = StateChecker(self)
+        self.state_checker.state_changed_signal.connect(self._update_labels)
+        self.state_checker.start_checker()
 
-    def _update_labels(self) -> None:
-        status = get_parameter("status").strip()
+    def _setup_label(self, text: str, x: int, y: int, width: int, height: int) -> QLabel:
+        label = QLabel(text, self)
+        label.resize(width, height)
+        label.move(x, y)
+        return label
+
+    def _update_labels(self, status, capacity) -> None:
         self.status_label.setText(f"Status: {status}")
 
-        capacity = int(get_parameter("capacity").strip())
         self._check_the_minimum_level(status, capacity)
         self.capacity_label.setText(f"Capacity: {capacity}%")
-        self.repaint()
 
     def _check_the_minimum_level(self, status: str, capacity: int) -> None:
-        if status == "Discharging" and capacity < self.minimum_level:
+        if status == "Discharging" and capacity < self.minimum_capacity_level:
             self._display_warning()
 
     @staticmethod
@@ -51,4 +46,4 @@ class MainWindow(QMainWindow):
             .exec_()
 
     def closeEvent(self, event: QCloseEvent):
-        self.run_notifier = False
+        self.state_checker.run_checker = False

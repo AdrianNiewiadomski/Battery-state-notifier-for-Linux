@@ -23,7 +23,7 @@ class StateChecker(QObject):
             capacity = int(self._get_parameter("capacity").strip())
             if self.parent.current_state != status or self.parent.current_capacity != capacity:
                 self.state_changed_signal.emit(status, capacity)
-            sleep(30)
+            sleep(10)
 
     def _get_parameter(self, parameter_name: str) -> str:
         with open(self.DIR_PATH + "/" + parameter_name, "r") as capacity_file:

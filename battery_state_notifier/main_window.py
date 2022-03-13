@@ -1,9 +1,10 @@
+import pathlib
 import sys
 
 from PySide2.QtWidgets import QMainWindow, QLabel, QMessageBox, QSystemTrayIcon, QMenu
 from PySide2.QtGui import QCloseEvent, QHideEvent, QIcon
 
-from battery_state_checker import StateChecker
+from battery_state_notifier.battery_state_checker import StateChecker
 
 
 class MainWindow(QMainWindow):
@@ -42,14 +43,17 @@ class MainWindow(QMainWindow):
 
     @staticmethod
     def _get_icon(icon_name: str) -> QIcon:
-        icons = {
-            "charging": QIcon("icons/battery_charging_icon.png"),
-            "empty": QIcon("icons/battery_empty_icon.png"),
-            "low": QIcon("icons/battery_low_icon.png"),
-            "medium": QIcon("icons/battery_medium_icon.png"),
-            "full": QIcon("icons/battery_full_icon.png")
+        icon_folder_path = pathlib.Path(__file__).parent.resolve() / "icons"
+
+        icon_names = {
+            "charging": "battery_charging_icon.png",
+            "empty": "battery_empty_icon.png",
+            "low": "battery_low_icon.png",
+            "medium": "battery_medium_icon.png",
+            "full": "battery_full_icon.png"
         }
-        return icons[icon_name]
+
+        return QIcon(str(icon_folder_path / icon_names[icon_name]))
 
     def _get_try_icon_menu(self):
         menu = QMenu()
